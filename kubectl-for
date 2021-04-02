@@ -1,0 +1,44 @@
+#!/bin/bash
+
+function GlobToRegexp {
+  local glob="$1"
+  local re=""
+
+  re=$(echo "${glob}" | sed 's/\*/.*/g')
+  re=$(echo "${re}" | sed 's/?/./g')
+  # Note: [abc] can be passed unmodified.
+  echo "${re}"
+}
+
+case "$1" in
+  -h|--help|help)
+    echo "kubectl for <glob> COMMAND"
+    echo ""
+    echo "Execute COMMAND over the clusters selected by name by <glob>."
+    echo "<glob> is a UNIX-style shell wildcard (e.g. * matches anything)."
+    echo ""
+    echo "Example: kubeetl for '*-west-*' get pods"
+    exit 0
+    ;;
+  *)
+    glob="$1"
+    shift
+    ;;
+esac
+
+kubeCFG="$HOME/.kube/config"
+if [ -z ${glob} ]; then
+  glob=".*"
+fi
+clusters=$(grep '^[ \t]*- name: ' ${kubeCFG} \
+  | sed 's/^[ \t]*-[ \t]*name:[ \t]*//' \
+  | grep "$(GlobToRegexp ${glob})")
+
+for c in ${clusters}; do
+  if [ -z "$*" ]; then
+    echo "# Cluster '${c}'"
+  else
+    echo "# Cluster '${c}'"
+    kubectl --cluster "${c}" "$@"
+  fi
+done
