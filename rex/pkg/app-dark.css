@@ -1,0 +1,221 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #121212;
+  color: #E0E0E0;
+  scrollbar-color: #555 #1E1E1E;
+  scrollbar-width: thin;
+}
+h1 {
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+kbd {
+  background-color: #333;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  border: 1px solid #555;
+  box-shadow: 0 2px 0 #555;
+  color: #E0E0E0;
+  font-family: monospace;
+  font-size: 0.9em;
+  margin: 0 0.2em;
+  position: relative;
+  top: -1px;
+}
+#main-container {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 100px);
+  border: 1px solid #444;
+  border-radius: 8px;
+  overflow-x: auto;
+  background-color: #1E1E1E;
+  width: fit-content;
+}
+.column {
+  min-width: 250px;
+  border-right: 1px solid #333;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.column:last-child {
+  border-right: none;
+}
+.column-header {
+  padding: 12px 16px;
+  font-weight: 600;
+  border-bottom: 1px solid #444;
+  background-color: #2a2a2a;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+li {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+li:last-child {
+  border-bottom: none;
+}
+li:hover {
+  background-color: #333;
+}
+li.selected {
+  background-color: #333;
+}
+.type-name {
+  color: #aaa;
+  font-size: 8pt;
+}
+.header-row {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.field-row {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.field-name {
+  font-size: 10pt;
+}
+.field-type {
+  font-size: 10pt;
+  margin-left: 6pt;
+  color: #aaa;
+}
+.doc-string {
+  font-size: 10pt;
+  margin-top: 10pt;
+  margin-left: 0pt;
+  max-width: 400px;
+  color: #aaa;
+}
+.doc-string a {
+  color: #A0C5FA;
+}
+.doc-string .heading {
+  font-weight: 600;
+}
+.doc-string li {
+  display: list-item;
+  list-style-type: disc;
+  list-style-position: inside;
+  margin-left: 6px;
+  padding-bottom: 0;
+  padding-top: 0;
+  margin: 0px;
+  border: 0px;
+}
+.chevron::after {
+  content: '>';
+  font-weight: bold;
+  color: #888;
+}
+li.selected .chevron::after {
+  color: #888;
+}
+/* search-dialog */
+#search-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+#search-dialog-dialog {
+  background-color: #2a2a2a;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 900px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+#search-dialog-dialog h2 {
+  margin-top: 0;
+}
+#search-dialog-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  border: 1px solid #444;
+  background-color: #1E1E1E;
+  color: #E0E0E0;
+  border-radius: 4px;
+}
+#search-dialog-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+#search-dialog-list li {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-start;
+  border: 0;
+}
+#search-dialog-list li:hover,
+#search-dialog-list li.selected {
+  background-color: #2a3d52;
+}
+.search-dialog-type-name {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 10pt;
+}
+.search-dialog-type-pkg {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 8pt;
+  color: #aaa;
+}
+/* theme picker */
+#theme-picker {
+  position: fixed;
+  top: 12px;
+  right: 20px;
+  z-index: 1000;
+}
+#theme-select {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #1E1E1E;
+  color: #E0E0E0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 6px center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+  padding-right: 30px;
+  transition: all 0.1s ease;
+}
+#theme-select:hover {
+  background-color: #333;
+  border-color: #444;
+}
+#theme-select:focus {
+  outline: none;
+  border-color: #A0C5FA;
+  box-shadow: 0 0 0 1px #A0C5FA;
+}

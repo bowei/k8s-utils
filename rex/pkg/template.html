@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resource Explorer (bowei-tools)</title>
+  <link rel="stylesheet" href="app-brown.css">
+</head>
+
+<body>
+  <div id="theme-picker">
+    <select id="theme-select">
+      <option value="app-brown.css">Brown</option>
+      <option value="app-dark.css">Dark</option>
+      <option value="app-blue.css">Blue</option>
+      <option value="app-green.css">Green</option>
+      <option value="app-light.css">Light</option>
+    </select>
+  </div>
+
+  <div id="help-text">
+    Type <kbd>/</kbd> to search...</p>
+  </div>
+
+  <div id="main-container"></div>
+
+  <div id="search-dialog-overlay">
+    <div id="search-dialog-dialog">
+      <h2>Search</h2>
+      <input type="text" id="search-dialog-input" placeholder="Filter types...">
+      <ul id="search-dialog-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const typeData = {{ .TypeData }};
+    const startTypes = '{{.StartTypes}}'.split(',').filter(s => s.trim() !== '');
+
+    {{ .JS }}
+
+  </script>
+
+</body>
+
+</html>

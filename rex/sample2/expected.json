@@ -1,0 +1,23 @@
+{
+  "github.com/bowei/rex/sample2.MyStruct": {
+    "package": "github.com/bowei/rex/sample2",
+    "typeName": "MyStruct",
+    "fields": [
+      {
+        "fieldName": "Request",
+        "typeName": "net/http.Request",
+        "typeDecorators": null,
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      }
+    ],
+    "enumValues": [],
+    "isRoot": false,
+    "docString": "",
+    "parsedDocString": {
+      "elements": null
+    }
+  }
+}

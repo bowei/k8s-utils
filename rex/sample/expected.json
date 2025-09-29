@@ -1,0 +1,256 @@
+{
+  "github.com/bowei/rex/sample.Content": {
+    "package": "github.com/bowei/rex/sample",
+    "typeName": "Content",
+    "fields": [
+      {
+        "fieldName": "NumField",
+        "typeName": "int",
+        "typeDecorators": null,
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      },
+      {
+        "fieldName": "SubContent",
+        "typeName": "github.com/bowei/rex/sample.SubContent",
+        "typeDecorators": null,
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      }
+    ],
+    "enumValues": [],
+    "isRoot": false,
+    "docString": "",
+    "parsedDocString": {
+      "elements": null
+    }
+  },
+  "github.com/bowei/rex/sample.MyEnum": {
+    "package": "github.com/bowei/rex/sample",
+    "typeName": "MyEnum",
+    "fields": [],
+    "enumValues": [
+      {
+        "name": "MyEnumA",
+        "docString": "MyEnumA is the first value.",
+        "parsedDocString": {
+          "elements": [
+            {
+              "type": "p",
+              "content": [
+                "MyEnumA is the first value."
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "name": "MyEnumB",
+        "docString": "MyEnumB is the second value.",
+        "parsedDocString": {
+          "elements": [
+            {
+              "type": "p",
+              "content": [
+                "MyEnumB is the second value."
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "name": "MyEnumC",
+        "docString": "MyEnumC is the third value.",
+        "parsedDocString": {
+          "elements": [
+            {
+              "type": "p",
+              "content": [
+                "MyEnumC is the third value."
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "isRoot": false,
+    "docString": "MyEnum is a sample enum.",
+    "parsedDocString": {
+      "elements": [
+        {
+          "type": "p",
+          "content": [
+            "MyEnum is a sample enum."
+          ]
+        }
+      ]
+    }
+  },
+  "github.com/bowei/rex/sample.MyStruct": {
+    "package": "github.com/bowei/rex/sample",
+    "typeName": "MyStruct",
+    "fields": [
+      {
+        "fieldName": "Content",
+        "typeName": "github.com/bowei/rex/sample.Content",
+        "typeDecorators": null,
+        "docString": "Content is content.\n\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.\n\n- A ListOfStuff\n- another item\n\nHeading:\n\n## Another heading\n\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.\nThis is some text.",
+        "parsedDocString": {
+          "elements": [
+            {
+              "type": "p",
+              "content": [
+                "Content is content."
+              ]
+            },
+            {
+              "type": "p",
+              "content": [
+                "This is some text. This is some text. This is some text. This is some text. This is some text. This is some text. This is some text. This is some text. This is some text. This is some text."
+              ]
+            },
+            {
+              "type": "l",
+              "content": [
+                "A ListOfStuff",
+                "another item"
+              ]
+            },
+            {
+              "type": "p",
+              "content": [
+                "Heading:"
+              ]
+            },
+            {
+              "type": "h",
+              "content": [
+                "Another heading"
+              ]
+            },
+            {
+              "type": "p",
+              "content": [
+                "This is some text. This is some text. This is some text. This is some text. This is some text."
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "fieldName": "ListOfStuff",
+        "typeName": "github.com/bowei/rex/sample.SubContent",
+        "typeDecorators": [
+          "List"
+        ],
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      },
+      {
+        "fieldName": "MapOfStuff",
+        "typeName": "github.com/bowei/rex/sample.SubContent",
+        "typeDecorators": [
+          "Map[string]"
+        ],
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      },
+      {
+        "fieldName": "ObjectMeta",
+        "typeName": "string",
+        "typeDecorators": null,
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      },
+      {
+        "fieldName": "PointerToListOfStuff",
+        "typeName": "github.com/bowei/rex/sample.SubContent",
+        "typeDecorators": [
+          "Ptr",
+          "List"
+        ],
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      },
+      {
+        "fieldName": "PointerToStuff",
+        "typeName": "github.com/bowei/rex/sample.SubContent",
+        "typeDecorators": [
+          "Ptr"
+        ],
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      },
+      {
+        "fieldName": "TypeMeta",
+        "typeName": "string",
+        "typeDecorators": null,
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      }
+    ],
+    "enumValues": [],
+    "isRoot": true,
+    "docString": "MyStruct is a struct.\n\nThis is some text.\n\n- A ListOfStuff\n- another item",
+    "parsedDocString": {
+      "elements": [
+        {
+          "type": "p",
+          "content": [
+            "MyStruct is a struct."
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            "This is some text."
+          ]
+        },
+        {
+          "type": "l",
+          "content": [
+            "A ListOfStuff",
+            "another item"
+          ]
+        }
+      ]
+    }
+  },
+  "github.com/bowei/rex/sample.SubContent": {
+    "package": "github.com/bowei/rex/sample",
+    "typeName": "SubContent",
+    "fields": [
+      {
+        "fieldName": "Name",
+        "typeName": "string",
+        "typeDecorators": null,
+        "docString": "",
+        "parsedDocString": {
+          "elements": null
+        }
+      }
+    ],
+    "enumValues": [],
+    "isRoot": false,
+    "docString": "",
+    "parsedDocString": {
+      "elements": null
+    }
+  }
+}

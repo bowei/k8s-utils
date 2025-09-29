@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Godoc Multi-Column</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        h1 {
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        #main-container {
+            display: flex;
+            flex-direction: row;
+            height: calc(100vh - 100px);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow-x: auto;
+            background-color: #fff;
+        }
+        .column {
+            min-width: 250px;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .column:last-child {
+            border-right: none;
+        }
+        .column-header {
+            padding: 12px 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f1f3f5;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        li {
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        li:hover {
+            background-color: #e9ecef;
+        }
+        li.selected {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .type-name {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        li.selected .type-name {
+            color: #e0e0e0;
+        }
+        .chevron::after {
+            content: '>';
+            font-weight: bold;
+            color: #adb5bd;
+        }
+        li.selected .chevron::after {
+            color: white;
+        }
+        .package-path {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        .type-name-header {
+            font-weight: 600;
+        }
+        .doc-string, .doc-string-item {
+            font-size: 0.9em;
+            color: #495057;
+            margin-top: 4px;
+            white-space: pre-wrap;
+        }
+        .package-name {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <h1>Godoc Multi-Column Browser</h1>
+    <div id="main-container"></div>
+
+    <script>
+        const typeData = {
+            "MyStruct": {
+                package: "main",
+                typeName: "MyStruct",
+                docString: "MyStruct is a sample struct. This is a very long docstring to test truncation. It should be truncated if it is longer than 120 characters. This sentence makes it longer than 120 characters for sure, so we can see the effect of truncation.",
+                fields: [
+                    { fieldName: "ID", typeName: "string", docString: "The ID of the struct." },
+                    { fieldName: "Timestamp", typeName: "int", docString: "The timestamp of the struct." },
+                    { fieldName: "MainContent", typeName: "Content", docString: "The main content of the struct. This is a very long docstring to test truncation. It should be truncated if it is longer than 120 characters. This sentence makes it longer than 120 characters for sure, so we can see the effect of truncation." },
+                ]
+            },
+            "Content": {
+                package: "main",
+                typeName: "Content",
+                docString: "Content is a nested struct.",
+                fields: [
+                    { fieldName: "NumField", typeName: "int", docString: "A number field." },
+                    { fieldName: "Sub", typeName: "SubContent", docString: "A sub-content field." },
+                    { fieldName: "IsActive", typeName: "bool", docString: "A boolean flag." },
+                ]
+            },
+            "SubContent": {
+                package: "main",
+                typeName: "SubContent",
+                docString: "SubContent is a deeper nested struct.",
+                fields: [
+                    { fieldName: "Title", typeName: "string", docString: "The title of the sub-content." },
+                    { fieldName: "Deep", typeName: "DeepContent", docString: "A deep content field." },
+                ]
+            },
+            "DeepContent": {
+                package: "main",
+                typeName: "DeepContent",
+                docString: "DeepContent is even deeper.",
+                fields: [
+                    { fieldName: "Value", typeName: "float", docString: "A float value." },
+                    { fieldName: "Deeper", typeName: "DeeperContent", docString: "The next level." },
+                ]
+            },
+            "DeeperContent": {
+                package: "main",
+                typeName: "DeeperContent",
+                docString: "DeeperContent is getting ridiculous.",
+                fields: [
+                    { fieldName: "Message", typeName: "string", docString: "A message." },
+                    { fieldName: "FinalLevel", typeName: "DeepestContent", docString: "The final level." },
+                ]
+            },
+            "DeepestContent": {
+                package: "main",
+                typeName: "DeepestContent",
+                docString: "This is the end of the line.",
+                fields: [
+                    { fieldName: "EndNote", typeName: "string", docString: "The end note." },
+                    { fieldName: "FinalValue", typeName: "int", docString: "The final value." },
+                ]
+            }
+        };
+
+        const mainContainer = document.getElementById('main-container');
+
+        function truncateDocString(doc, maxLength = 120) {
+            if (!doc) {
+                return '';
+            }
+            // Take first sentence.
+            let firstSentence = doc;
+            const periodIndex = doc.indexOf('.');
+            if (periodIndex !== -1) {
+                firstSentence = doc.substring(0, periodIndex + 1);
+            }
+
+            if (firstSentence.length > maxLength) {
+                return firstSentence.substring(0, maxLength) + '...';
+            }
+            return firstSentence;
+        }
+
+        function createColumn(typeName) {
+            const typeInfo = typeData[typeName];
+            if (!typeInfo) return;
+
+            const column = document.createElement('div');
+            column.className = 'column';
+
+            const header = document.createElement('div');
+            header.className = 'column-header';
+            
+            const packageSpan = document.createElement('div');
+            packageSpan.className = 'package-path';
+            packageSpan.textContent = typeInfo.package || '';
+            header.appendChild(packageSpan);
+
+            const typeNameHeaderSpan = document.createElement('div');
+            typeNameHeaderSpan.className = 'type-name-header';
+            typeNameHeaderSpan.textContent = typeInfo.typeName;
+            header.appendChild(typeNameHeaderSpan);
+
+            const docStringSpan = document.createElement('div');
+            docStringSpan.className = 'doc-string';
+            docStringSpan.textContent = truncateDocString(typeInfo.docString);
+            header.appendChild(docStringSpan);
+
+            column.appendChild(header);
+
+            const ul = document.createElement('ul');
+            (typeInfo.fields || []).forEach(field => {
+                const li = document.createElement('li');
+                li.dataset.fieldName = field.fieldName;
+                li.dataset.typeName = field.typeName;
+                li.dataset.parentType = typeName;
+
+                let packageName = '';
+                let shortTypeName = field.typeName;
+
+                if (typeData[field.typeName]) {
+                    packageName = typeData[field.typeName].package;
+                    shortTypeName = typeData[field.typeName].typeName;
+                } else {
+                    const lastDot = field.typeName.lastIndexOf('.');
+                    if (lastDot !== -1) {
+                        packageName = field.typeName.substring(0, lastDot);
+                        shortTypeName = field.typeName.substring(lastDot + 1);
+                    }
+                }
+
+                const contentWrapper = document.createElement('div');
+                
+                const fieldNameSpan = document.createElement('span');
+                fieldNameSpan.className = 'field-name';
+                fieldNameSpan.textContent = field.fieldName;
+                contentWrapper.appendChild(fieldNameSpan);
+                
+                contentWrapper.appendChild(document.createTextNode(' '));
+
+                const typeNameSpan = document.createElement('span');
+                typeNameSpan.className = 'type-name';
+                typeNameSpan.textContent = shortTypeName;
+                contentWrapper.appendChild(typeNameSpan);
+
+                const packageSpan = document.createElement('div');
+                packageSpan.className = 'package-name';
+                packageSpan.textContent = packageName;
+                contentWrapper.appendChild(packageSpan);
+
+                const docStringItemSpan = document.createElement('div');
+                docStringItemSpan.className = 'doc-string-item';
+                docStringItemSpan.textContent = truncateDocString(field.docString);
+                contentWrapper.appendChild(docStringItemSpan);
+
+                li.appendChild(contentWrapper);
+
+                if (typeData[field.typeName]) {
+                     const chevron = document.createElement('span');
+                     chevron.className = 'chevron';
+                     li.appendChild(chevron);
+                }
+
+                li.addEventListener('click', (event) => {
+                    handleFieldClick(event.currentTarget);
+                });
+                ul.appendChild(li);
+            });
+
+            column.appendChild(ul);
+            return column;
+        }
+
+        function handleFieldClick(listItem) {
+            const { typeName, parentType } = listItem.dataset;
+            
+            // Find the column of the clicked item
+            let currentColumn = listItem.closest('.column');
+            
+            // Remove all subsequent columns
+            while (currentColumn && currentColumn.nextSibling) {
+                currentColumn.nextSibling.remove();
+            }
+
+            // Deselect previously selected items in the same list
+            const parentList = listItem.parentElement;
+            parentList.querySelectorAll('li.selected').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Select the clicked item
+            listItem.classList.add('selected');
+
+            // Create and append the new column if the type is a struct
+            if (typeData[typeName]) {
+                const newColumn = createColumn(typeName);
+                if (newColumn) {
+                    mainContainer.appendChild(newColumn);
+                    newColumn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                }
+            }
+        }
+
+        // Initial load
+        function init() {
+            const initialColumn = createColumn("MyStruct");
+            if (initialColumn) {
+                mainContainer.appendChild(initialColumn);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
