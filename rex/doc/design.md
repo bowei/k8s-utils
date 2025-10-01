@@ -215,6 +215,7 @@ We need to:
 
 Example:
 
+```json
 {
   "github.com/bowei/rex/sample.Content": {
     "package": "github.com/bowei/rex/sample",
@@ -279,3 +280,4 @@ Example:
     "parsedDocString": { "elements": [{"type": "p", "content": ["MyEnum is..."]}] }
   }
 }
+```
