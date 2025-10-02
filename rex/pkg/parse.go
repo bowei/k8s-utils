@@ -325,8 +325,6 @@ func findConstantsByType(docPkg *doc.Package, targetTypeName string) []EnumInfo 
 			if !ok {
 				continue
 			}
-			log.Printf("spec %+v", vs)
-
 			// Check if this constant has an explicit type that matches our target
 			if vs.Type != nil {
 				if ident, ok := vs.Type.(*ast.Ident); ok && ident.Name == targetTypeName {
@@ -339,7 +337,7 @@ func findConstantsByType(docPkg *doc.Package, targetTypeName string) []EnumInfo 
 							if vs.Doc != nil {
 								docString = vs.Doc.Text()
 							}
-							log.Printf("found exported enum const value with explicit type: %s", name.Name)
+							log.Printf("Found exported enum const value with explicit type: %s", name.Name)
 							enumValues = append(enumValues, EnumInfo{
 								Name:            name.Name,
 								DocString:       strings.TrimSpace(docString),
@@ -360,7 +358,7 @@ func findConstantsByType(docPkg *doc.Package, targetTypeName string) []EnumInfo 
 								if vs.Doc != nil {
 									docString = vs.Doc.Text()
 								}
-								log.Printf("found exported enum const value with type conversion: %s", name.Name)
+								log.Printf("Found exported enum const value with type conversion: %s", name.Name)
 								enumValues = append(enumValues, EnumInfo{
 									Name:            name.Name,
 									DocString:       strings.TrimSpace(docString),
@@ -378,6 +376,8 @@ func findConstantsByType(docPkg *doc.Package, targetTypeName string) []EnumInfo 
 }
 
 func processEnum(typeInfo *TypeInfo, ident *ast.Ident, docPkg *doc.Package) bool {
+	log.Printf("processEnum %s", typeInfo.TypeName)
+
 	validUnderlying := map[string]bool{
 		"string":  true,
 		"int":     true,

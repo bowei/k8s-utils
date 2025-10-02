@@ -23,6 +23,7 @@ type TypeInfo struct {
 type FieldInfo struct {
 	FieldName      string   `json:"fieldName"`
 	TypeName       string   `json:"typeName"`
+	Package        string   `json:"package"`
 	TypeDecorators []string `json:"typeDecorators"`
 
 	DocString       string      `json:"docString"`
