@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -421,7 +422,9 @@ func parsePackage(pkgDir string, allTypes map[string]TypeInfo) (map[string]bool,
 	log.Printf("parsing package: %s", pkgImportPath)
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, pkgDir, nil, parser.ParseComments)
+	pkgs, err := parser.ParseDir(fset, pkgDir, func(fi os.FileInfo) bool {
+		return !strings.HasSuffix(fi.Name(), "_test.go")
+	}, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
@@ -436,12 +439,12 @@ func parsePackage(pkgDir string, allTypes map[string]TypeInfo) (map[string]bool,
 		log.Printf("processing package AST: %s", pkg.Name)
 		docPkg := doc.New(pkg, pkgImportPath, 0)
 
-		for _, c := range docPkg.Consts {
-			log.Printf("Const: %v", c.Names)
-		}
-
-		for _, v := range docPkg.Vars {
-			log.Printf("Vars: %v", v.Names)
+		// Collect all imports from all files in the package
+		for _, file := range pkg.Files {
+			for _, i := range file.Imports {
+				path := strings.Trim(i.Path.Value, `"`)
+				externalPkgs[path] = true
+			}
 		}
 
 		for _, t := range docPkg.Types {
