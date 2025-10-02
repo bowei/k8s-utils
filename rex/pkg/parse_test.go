@@ -19,7 +19,7 @@ type Status string
 const (
 	// StatusActive means it's active
 	StatusActive Status = "active"
-	// StatusInactive means it's inactive  
+	// StatusInactive means it's inactive
 	StatusInactive Status = "inactive"
 )
 `
@@ -36,7 +36,7 @@ const (
 	}
 
 	docPkg := doc.New(pkg, "test", 0)
-	
+
 	// Find the Status type
 	var statusType *doc.Type
 	for _, t := range docPkg.Types {
@@ -70,7 +70,7 @@ const (
 			DocString: "StatusActive means it's active",
 		},
 		{
-			Name:      "StatusInactive", 
+			Name:      "StatusInactive",
 			DocString: "StatusInactive means it's inactive",
 		},
 	}
@@ -121,7 +121,7 @@ var (
 	}
 
 	docPkg := doc.New(pkg, "test", 0)
-	
+
 	// Find the Status type
 	var statusType *doc.Type
 	for _, t := range docPkg.Types {
@@ -156,7 +156,7 @@ var (
 		},
 		{
 			Name:      "StatusInactive",
-			DocString: "StatusInactive means it's inactive", 
+			DocString: "StatusInactive means it's inactive",
 		},
 	}
 
@@ -209,7 +209,7 @@ var (
 	}
 
 	docPkg := doc.New(pkg, "test", 0)
-	
+
 	// Find the Status type
 	var statusType *doc.Type
 	for _, t := range docPkg.Types {
@@ -280,12 +280,12 @@ type MyStruct struct {
 	}
 
 	pkg := &ast.Package{
-		Name:  "test", 
+		Name:  "test",
 		Files: map[string]*ast.File{"test.go": f},
 	}
 
 	docPkg := doc.New(pkg, "test", 0)
-	
+
 	// Find the MyStruct type
 	var structType *doc.Type
 	for _, t := range docPkg.Types {
@@ -325,7 +325,7 @@ type EmptyStatus string
 	}
 
 	docPkg2 := doc.New(pkg2, "test", 0)
-	
+
 	var emptyType *doc.Type
 	for _, t := range docPkg2.Types {
 		if t.Name == "EmptyStatus" {
@@ -354,5 +354,81 @@ type EmptyStatus string
 
 	if len(typeInfo2.EnumValues) != 0 {
 		t.Errorf("expected 0 enum values, got %d", len(typeInfo2.EnumValues))
+	}
+}
+
+func TestFindConstantsByType(t *testing.T) {
+	src := `
+package testpkg
+
+// MyType is a test type.
+type MyType string
+
+const (
+	// Doc for Val1
+	Val1 MyType = "Value1"  // explicit type
+	Val2 = MyType("Value2") // other way to declare the const.
+	// unexported
+	val3 MyType = "Value3"
+)
+
+const (
+	// Doc for Val4
+	Val4 = MyType("Value4") // type conversion
+	Val5 = MyType("Value5")
+)
+
+const (
+	OtherVal = "other"
+)
+`
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test.go", src, parser.ParseComments)
+	if err != nil {
+		t.Fatalf("failed to parse source: %v", err)
+	}
+
+	pkg := &ast.Package{
+		Name:  "testpkg",
+		Files: map[string]*ast.File{"test.go": f},
+	}
+
+	docPkg := doc.New(pkg, "testpkg", 0)
+
+	enumValues := findConstantsByType(docPkg, "MyType", "testpkg")
+
+	expected := []EnumInfo{
+		{Name: "Val1", DocString: "Doc for Val1"},
+		{Name: "Val2", DocString: ""},
+		{Name: "Val4", DocString: "Doc for Val4"},
+		{Name: "Val5", DocString: ""},
+	}
+
+	if len(enumValues) != len(expected) {
+		t.Fatalf("expected %d enum values, got %d", len(expected), len(enumValues))
+	}
+
+	// Note: The order of constants is not guaranteed, so we check for existence.
+	expectedMap := make(map[string]string)
+	for _, e := range expected {
+		expectedMap[e.Name] = e.DocString
+	}
+
+	for _, enum := range enumValues {
+		doc, ok := expectedMap[enum.Name]
+		if !ok {
+			t.Errorf("unexpected enum value: %s", enum.Name)
+			continue
+		}
+		if enum.DocString != doc {
+			t.Errorf("for enum %s, expected doc string '%s', got '%s'", enum.Name, doc, enum.DocString)
+		}
+		delete(expectedMap, enum.Name)
+	}
+
+	if len(expectedMap) > 0 {
+		for name := range expectedMap {
+			t.Errorf("missing expected enum value: %s", name)
+		}
 	}
 }

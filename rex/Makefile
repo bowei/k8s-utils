@@ -7,6 +7,7 @@ all: test build
 build:
 	go build ./pkg/...
 	go build -o rex .
+	./pkg/build-themes.sh
 
 test:
 	go test ./pkg/...
