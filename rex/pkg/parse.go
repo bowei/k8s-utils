@@ -293,50 +293,78 @@ func processStruct(
 }
 
 // findConstantsByType finds constants that have an explicit type matching the target type
-func findConstantsByType(docPkg *doc.Package, targetTypeName string, pkgImportPath string) []EnumInfo {
+func findConstantsByType(docPkg *doc.Package, targetTypeName string) []EnumInfo {
 	var enumValues []EnumInfo
 
+	// log.Printf("docPkg = %s", pretty.Sprint(docPkg))
+
+	var decls []*ast.GenDecl
+	// Const parsed at the package level.
 	for _, c := range docPkg.Consts {
 		if c.Decl != nil {
-			for _, spec := range c.Decl.Specs {
-				if vs, ok := spec.(*ast.ValueSpec); ok {
-					// Check if this constant has an explicit type that matches our target
-					if vs.Type != nil {
-						if ident, ok := vs.Type.(*ast.Ident); ok && ident.Name == targetTypeName {
-							// Found a constant with explicit type matching our target
-							for _, name := range vs.Names {
-								if ast.IsExported(name.Name) {
-									docString := ""
-									if vs.Doc != nil {
-										docString = vs.Doc.Text()
-									}
-									log.Printf("found exported enum const value with explicit type: %s", name.Name)
-									enumValues = append(enumValues, EnumInfo{
-										Name:            name.Name,
-										DocString:       strings.TrimSpace(docString),
-										ParsedDocString: *parseGoDocString(docString),
-									})
-								}
+			decls = append(decls, c.Decl)
+		}
+	}
+	// Const parsed into the type decl.
+	for _, ty := range docPkg.Types {
+		if ty.Name == targetTypeName {
+			for _, c := range ty.Consts {
+				decls = append(decls, c.Decl)
+			}
+			for _, v := range ty.Vars {
+				decls = append(decls, v.Decl)
+			}
+			break
+		}
+	}
+
+	for _, d := range decls {
+		for _, spec := range d.Specs {
+			vs, ok := spec.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
+			log.Printf("spec %+v", vs)
+
+			// Check if this constant has an explicit type that matches our target
+			if vs.Type != nil {
+				if ident, ok := vs.Type.(*ast.Ident); ok && ident.Name == targetTypeName {
+					// Found a constant with explicit type matching our target
+					for _, name := range vs.Names {
+						log.Printf("Looking at %v %s", ident, name.Name)
+
+						if ast.IsExported(name.Name) {
+							docString := ""
+							if vs.Doc != nil {
+								docString = vs.Doc.Text()
 							}
+							log.Printf("found exported enum const value with explicit type: %s", name.Name)
+							enumValues = append(enumValues, EnumInfo{
+								Name:            name.Name,
+								DocString:       strings.TrimSpace(docString),
+								ParsedDocString: *parseGoDocString(docString),
+							})
 						}
-					} else if vs.Values != nil {
-						// Check if the value is a type conversion like MyType("value")
-						for i, name := range vs.Names {
-							if ast.IsExported(name.Name) && i < len(vs.Values) {
-								if callExpr, ok := vs.Values[i].(*ast.CallExpr); ok {
-									if ident, ok := callExpr.Fun.(*ast.Ident); ok && ident.Name == targetTypeName {
-										docString := ""
-										if vs.Doc != nil {
-											docString = vs.Doc.Text()
-										}
-										log.Printf("found exported enum const value with type conversion: %s", name.Name)
-										enumValues = append(enumValues, EnumInfo{
-											Name:            name.Name,
-											DocString:       strings.TrimSpace(docString),
-											ParsedDocString: *parseGoDocString(docString),
-										})
-									}
+					}
+				}
+			} else if vs.Values != nil {
+				// Check if the value is a type conversion like MyType("value")
+				for i, name := range vs.Names {
+					if ast.IsExported(name.Name) && i < len(vs.Values) {
+						if callExpr, ok := vs.Values[i].(*ast.CallExpr); ok {
+							if ident, ok := callExpr.Fun.(*ast.Ident); ok && ident.Name == targetTypeName {
+								log.Printf("Looking at %v %s", ident, name.Name)
+
+								docString := ""
+								if vs.Doc != nil {
+									docString = vs.Doc.Text()
 								}
+								log.Printf("found exported enum const value with type conversion: %s", name.Name)
+								enumValues = append(enumValues, EnumInfo{
+									Name:            name.Name,
+									DocString:       strings.TrimSpace(docString),
+									ParsedDocString: *parseGoDocString(docString),
+								})
 							}
 						}
 					}
@@ -344,115 +372,42 @@ func findConstantsByType(docPkg *doc.Package, targetTypeName string, pkgImportPa
 			}
 		}
 	}
+
 	return enumValues
 }
 
-func processEnum(typeInfo *TypeInfo, ident *ast.Ident, t *doc.Type, docPkg *doc.Package, pkgImportPath string) bool {
-	// Handle potential enums
-	isEnum := false
-
-	// First check for constants with explicit types
-	explicitlyTypedConsts := findConstantsByType(docPkg, typeInfo.TypeName, pkgImportPath)
-
-	switch ident.Name {
-	case "string", "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "uintptr", "float32", "float64", "byte", "rune":
-		if len(t.Consts) > 0 || len(t.Vars) > 0 || len(explicitlyTypedConsts) > 0 {
-			isEnum = true
-		}
+func processEnum(typeInfo *TypeInfo, ident *ast.Ident, docPkg *doc.Package) bool {
+	validUnderlying := map[string]bool{
+		"string":  true,
+		"int":     true,
+		"int8":    true,
+		"int16":   true,
+		"int32":   true,
+		"int64":   true,
+		"uint":    true,
+		"uint8":   true,
+		"uint16":  true,
+		"uint32":  true,
+		"uint64":  true,
+		"uintptr": true,
+		"float32": true,
+		"float64": true,
+		"byte":    true,
+		"rune":    true,
+	}
+	if _, ok := validUnderlying[ident.Name]; !ok {
+		log.Printf("type %s is not an enum (base type %s)", typeInfo.TypeName, ident.Name)
+		return false
 	}
 
-	if !isEnum {
-		log.Printf("type %s is not an enum (base type %s, %d consts, %d vars, %d explicitly typed consts)", typeInfo.TypeName, ident.Name, len(t.Consts), len(t.Vars), len(explicitlyTypedConsts))
+	consts := findConstantsByType(docPkg, typeInfo.TypeName)
+	if len(consts) == 0 {
+		log.Printf("type %s does not have consts or values", typeInfo.TypeName)
 		return false
 	}
 
 	log.Printf("type %s is an enum (base type %s)", typeInfo.TypeName, ident.Name)
-
-	// Process constants
-	for _, c := range t.Consts {
-		for _, name := range c.Names {
-			if !ast.IsExported(name) {
-				log.Printf("skipping unexported enum const value: %s", name)
-				continue
-			}
-			log.Printf("found exported enum const value: %s", name)
-
-			docString := c.Doc
-			// Find the specific doc for this const value
-			if c.Decl != nil {
-				for _, spec := range c.Decl.Specs {
-					if vs, ok := spec.(*ast.ValueSpec); ok {
-						for _, n := range vs.Names {
-							if n.Name == name {
-								if vs.Doc != nil {
-									docString = vs.Doc.Text()
-								}
-								break
-							}
-						}
-					}
-				}
-			}
-
-			typeInfo.EnumValues = append(typeInfo.EnumValues, EnumInfo{
-				Name:            name,
-				DocString:       strings.TrimSpace(docString),
-				ParsedDocString: *parseGoDocString(docString),
-			})
-		}
-	}
-
-	// Process variables
-	for _, v := range t.Vars {
-		for _, name := range v.Names {
-			if !ast.IsExported(name) {
-				log.Printf("skipping unexported enum var value: %s", name)
-				continue
-			}
-
-			// Check if this variable has the correct type annotation
-			if v.Decl != nil {
-				for _, spec := range v.Decl.Specs {
-					if vs, ok := spec.(*ast.ValueSpec); ok {
-						// Check if this variable spec contains our variable name
-						hasOurVar := false
-						for _, n := range vs.Names {
-							if n.Name == name {
-								hasOurVar = true
-								break
-							}
-						}
-						if !hasOurVar {
-							continue
-						}
-
-						// Check if the type matches our enum's base type
-						if vs.Type != nil {
-							if typeIdent, ok := vs.Type.(*ast.Ident); ok {
-								if typeIdent.Name == typeInfo.TypeName {
-									log.Printf("found exported enum var value: %s", name)
-
-									docString := v.Doc
-									if vs.Doc != nil {
-										docString = vs.Doc.Text()
-									}
-
-									typeInfo.EnumValues = append(typeInfo.EnumValues, EnumInfo{
-										Name:            name,
-										DocString:       strings.TrimSpace(docString),
-										ParsedDocString: *parseGoDocString(docString),
-									})
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Add explicitly typed constants that weren't already included
-	typeInfo.EnumValues = append(typeInfo.EnumValues, explicitlyTypedConsts...)
+	typeInfo.EnumValues = append(typeInfo.EnumValues, consts...)
 
 	return true
 }
@@ -544,7 +499,7 @@ func processType(
 		isProcessed = true
 	case *ast.Ident:
 		log.Printf("type %s is an ident, checking for enum", qualifiedTypeName)
-		if processEnum(&typeInfo, spec, t, docPkg, pkgImportPath) {
+		if processEnum(&typeInfo, spec, docPkg) {
 			isProcessed = true
 		}
 	}

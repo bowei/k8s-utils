@@ -5,6 +5,8 @@ import (
 	"go/doc"
 	"go/parser"
 	"go/token"
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -58,7 +60,7 @@ const (
 		TypeName: "Status",
 	}
 
-	result := processEnum(&typeInfo, ident, statusType, docPkg, "test")
+	result := processEnum(&typeInfo, ident, docPkg)
 
 	if !result {
 		t.Error("processEnum should return true for valid enum")
@@ -143,7 +145,7 @@ var (
 		TypeName: "Status",
 	}
 
-	result := processEnum(&typeInfo, ident, statusType, docPkg, "test")
+	result := processEnum(&typeInfo, ident, docPkg)
 
 	if !result {
 		t.Error("processEnum should return true for valid enum with variables")
@@ -231,7 +233,7 @@ var (
 		TypeName: "Status",
 	}
 
-	result := processEnum(&typeInfo, ident, statusType, docPkg, "test")
+	result := processEnum(&typeInfo, ident, docPkg)
 
 	if !result {
 		t.Error("processEnum should return true for valid enum with mixed constants and variables")
@@ -346,7 +348,7 @@ type EmptyStatus string
 		TypeName: "EmptyStatus",
 	}
 
-	result := processEnum(&typeInfo2, ident2, emptyType, docPkg2, "test")
+	result := processEnum(&typeInfo2, ident2, docPkg2)
 
 	if result {
 		t.Error("processEnum should return false for type with no constants or variables")
@@ -395,40 +397,35 @@ const (
 
 	docPkg := doc.New(pkg, "testpkg", 0)
 
-	enumValues := findConstantsByType(docPkg, "MyType", "testpkg")
+	got := findConstantsByType(docPkg, "MyType")
 
+	sort.Slice(got, func(i, j int) bool {
+		return got[i].Name < got[j].Name
+	})
 	expected := []EnumInfo{
-		{Name: "Val1", DocString: "Doc for Val1"},
+		{
+			Name:      "Val1",
+			DocString: "Doc for Val1",
+			ParsedDocString: GoDocString{
+				Elements: []GoDocElem{
+					{Type: "p", Content: []string{"Doc for Val1"}},
+				},
+			},
+		},
 		{Name: "Val2", DocString: ""},
-		{Name: "Val4", DocString: "Doc for Val4"},
+		{
+			Name:      "Val4",
+			DocString: "Doc for Val4",
+			ParsedDocString: GoDocString{
+				Elements: []GoDocElem{
+					{Type: "p", Content: []string{"Doc for Val4"}},
+				},
+			},
+		},
 		{Name: "Val5", DocString: ""},
 	}
 
-	if len(enumValues) != len(expected) {
-		t.Fatalf("expected %d enum values, got %d", len(expected), len(enumValues))
-	}
-
-	// Note: The order of constants is not guaranteed, so we check for existence.
-	expectedMap := make(map[string]string)
-	for _, e := range expected {
-		expectedMap[e.Name] = e.DocString
-	}
-
-	for _, enum := range enumValues {
-		doc, ok := expectedMap[enum.Name]
-		if !ok {
-			t.Errorf("unexpected enum value: %s", enum.Name)
-			continue
-		}
-		if enum.DocString != doc {
-			t.Errorf("for enum %s, expected doc string '%s', got '%s'", enum.Name, doc, enum.DocString)
-		}
-		delete(expectedMap, enum.Name)
-	}
-
-	if len(expectedMap) > 0 {
-		for name := range expectedMap {
-			t.Errorf("missing expected enum value: %s", name)
-		}
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("got %#v, want %#v", got, expected)
 	}
 }
