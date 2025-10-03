@@ -17,10 +17,12 @@ func TestWriteJSON(t *testing.T) {
 				{
 					FieldName: "BField",
 					TypeName:  "string",
+					Package:   "",
 				},
 				{
 					FieldName: "AField",
 					TypeName:  "int",
+					Package:   "",
 				},
 			},
 			EnumValues: []EnumInfo{
@@ -45,12 +47,14 @@ func TestWriteJSON(t *testing.T) {
       {
         "fieldName": "AField",
         "typeName": "int",
+        "package": "",
         "typeDecorators": null,
         "docString": ""
       },
       {
         "fieldName": "BField",
         "typeName": "string",
+        "package": "",
         "typeDecorators": null,
         "docString": ""
       }

@@ -514,6 +514,7 @@ type K8sResource struct {
 		{
 			FieldName: "Field1",
 			TypeName:  "string",
+			Package:   "",
 			DocString: "Field1 doc string",
 			ParsedDocString: GoDocString{
 				Elements: []GoDocElem{
@@ -524,6 +525,7 @@ type K8sResource struct {
 		{
 			FieldName:      "Field2",
 			TypeName:       "int",
+			Package:        "",
 			TypeDecorators: []string{"Ptr"},
 			DocString:      "Field2 is an integer pointer",
 			ParsedDocString: GoDocString{
@@ -535,6 +537,7 @@ type K8sResource struct {
 		{
 			FieldName:      "Field3",
 			TypeName:       "string",
+			Package:        "",
 			TypeDecorators: []string{"List"},
 			DocString:      "Field3 is a list of strings",
 			ParsedDocString: GoDocString{
@@ -546,6 +549,7 @@ type K8sResource struct {
 		{
 			FieldName:      "Field4",
 			TypeName:       "bool",
+			Package:        "",
 			TypeDecorators: []string{"Map[string]"},
 			DocString:      "Field4 is a map",
 			ParsedDocString: GoDocString{
@@ -557,6 +561,7 @@ type K8sResource struct {
 		{
 			FieldName: "Field5",
 			TypeName:  "test.AnotherStruct",
+			Package:   "test",
 			DocString: "Field5 is a nested struct",
 			ParsedDocString: GoDocString{
 				Elements: []GoDocElem{
@@ -567,6 +572,7 @@ type K8sResource struct {
 		{
 			FieldName: "Field6",
 			TypeName:  "k8s.io/apimachinery/pkg/apis/meta/v1.Time",
+			Package:   "k8s.io/apimachinery/pkg/apis/meta/v1",
 			DocString: "Field6 is from an external package",
 			ParsedDocString: GoDocString{
 				Elements: []GoDocElem{
@@ -577,6 +583,7 @@ type K8sResource struct {
 		{
 			FieldName: "AnotherStruct",
 			TypeName:  "test.AnotherStruct",
+			Package:   "test",
 			DocString: "Embedded field",
 			ParsedDocString: GoDocString{
 				Elements: []GoDocElem{

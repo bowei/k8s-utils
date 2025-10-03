@@ -130,10 +130,24 @@ func resolveType(
 	importMap map[string]string,
 	externalPkgs map[string]bool,
 ) (string, []string) {
-	return resolveTypeRecursive(expr, pkgImportPath, importMap, externalPkgs, 0)
+	typeName, decorators := resolveTypeRecursive(expr, pkgImportPath, importMap, externalPkgs, 0)
+	log.Printf("resolveType(%q) = %s, %v", pkgImportPath, typeName, decorators)
+	return typeName, decorators
 }
 
-// resolveTypeRecursive is the recursive implementation for resolveType with logging depth.
+func isPrimitive(typeName string) bool {
+	switch typeName {
+	case "bool", "string", "int", "int8", "int16", "int32", "int64":
+		return true
+	case "uint", "uint8", "uint16", "uint32", "uint64", "uintptr", "byte", "rune":
+		return true
+	case "float32", "float64", "complex64", "complex128":
+		return true
+	}
+	return false
+}
+
+// resolveTypeRecursive is the recursive implementation for resolveType.
 func resolveTypeRecursive(
 	expr ast.Expr,
 	pkgImportPath string,
@@ -157,8 +171,12 @@ func resolveTypeRecursive(
 		return valueType, append(decorators, fmt.Sprintf("Map[%s]", keyType))
 	case *ast.Ident:
 		if t.Obj == nil {
-			log.Printf("resolving Ident: built-in type %s", t.Name)
-			return t.Name, nil // Built-in type
+			if isPrimitive(t.Name) {
+				log.Printf("resolving Ident: built-in type %s", t.Name)
+				return t.Name, nil // Built-in type
+			}
+			log.Printf("resolving Ident: alias of built-in type %s", t.Name)
+			return pkgImportPath + "." + t.Name, nil // Type in the same package
 		}
 		log.Printf("resolving Ident: same-package type %s", t.Name)
 		return pkgImportPath + "." + t.Name, nil // Type in the same package
@@ -228,6 +246,12 @@ func processStruct(
 				continue
 			}
 
+			var fieldPkg string
+			lastDot := strings.LastIndex(fieldType, ".")
+			if lastDot != -1 {
+				fieldPkg = fieldType[:lastDot]
+			}
+
 			// Reverse decorators to get the correct order (e.g., Ptr to List)
 			for i, j := 0, len(decorators)-1; i < j; i, j = i+1, j-1 {
 				decorators[i], decorators[j] = decorators[j], decorators[i]
@@ -248,6 +272,7 @@ func processStruct(
 					fieldInfo := FieldInfo{
 						FieldName:       name.Name,
 						TypeName:        fieldType,
+						Package:         fieldPkg,
 						TypeDecorators:  decorators,
 						DocString:       fieldDoc,
 						ParsedDocString: *parseGoDocString(fieldDoc),
@@ -261,6 +286,7 @@ func processStruct(
 				fieldInfo := FieldInfo{
 					FieldName:       fieldName,
 					TypeName:        fieldType,
+					Package:         fieldPkg,
 					TypeDecorators:  decorators,
 					DocString:       fieldDoc,
 					ParsedDocString: *parseGoDocString(fieldDoc),
@@ -283,11 +309,7 @@ func processStruct(
 			hasObjectMeta = true
 		}
 	}
-
-	requestSuffix := strings.HasSuffix(typeInfo.TypeName, "Request")
-	responseSuffix := strings.HasSuffix(typeInfo.TypeName, "Response")
-
-	if hasTypeMeta && hasObjectMeta || requestSuffix || responseSuffix {
+	if hasTypeMeta && hasObjectMeta {
 		typeInfo.IsRoot = true
 	}
 	return nil
