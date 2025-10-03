@@ -59,13 +59,13 @@ function createDocString(docString) {
     return container;
   }
 
-  if (! docString.elements) {
+  if (!docString.elements) {
     console.log('ERROR: empty docString.elements');
     return container;
   }
 
   const stn = document.createTextNode(
-      getFirstSentence(docString.elements[0].content[0]));
+    getFirstSentence(docString.elements[0].content[0]));
   summary.appendChild(stn);
   linkifyTextNode(stn);
 
@@ -88,9 +88,9 @@ function createDocString(docString) {
       case 'p': {
         const p = document.createElement('p');
         elem.content[0].split('\n').forEach((line, index, arr) => {
-	  const tn = document.createTextNode(line);
+          const tn = document.createTextNode(line);
           p.appendChild(tn);
-	  linkifyTextNode(tn);
+          linkifyTextNode(tn);
           if (index < arr.length - 1) {
             p.appendChild(document.createElement('br'));
           }
@@ -100,7 +100,7 @@ function createDocString(docString) {
       }
       case 'h': {
         const h = document.createElement('div');
-	h.className = 'heading';
+        h.className = 'heading';
         h.textContent = elem.content[0];
         details.appendChild(h);
         break;
@@ -110,9 +110,9 @@ function createDocString(docString) {
         elem.content.forEach(itemText => {
           const li = document.createElement('li');
           itemText.split('\n').forEach((line, index, arr) => {
-	    const tn = document.createTextNode(line)
+            const tn = document.createTextNode(line)
             li.appendChild(tn);
-	    linkifyTextNode(tn);
+            linkifyTextNode(tn);
             if (index < arr.length - 1) {
               li.appendChild(document.createElement('br'));
             }
@@ -131,7 +131,7 @@ function createDocString(docString) {
         break;
       }
       case 'd': {
-	break; // TODO: ignore this for now.
+        break; // TODO: ignore this for now.
         const p = document.createElement('p');
         p.className = 'directive';
         p.textContent = elem.content[0];
@@ -145,7 +145,7 @@ function createDocString(docString) {
 }
 
 function getFirstSentence(text) {
-  if (! text) { return ""; }
+  if (!text) { return ""; }
   // The regex looks for the first sentence ending with a '.', '?', or '!'
   const match = text.match(/^.+?[.?!]/);
 
@@ -290,7 +290,6 @@ function populateSearchDialogList(filter = '') {
   searchDialogList.innerHTML = '';
 
   const typeArray = Object.entries(typeData);
-  typeArray.sort((a, b) => { return a[1].typeName < b[1].typeName });
   const typeNames = typeArray.map(x => { return x[0] });
 
   const filteredTypes = typeNames.filter(name => {
@@ -299,6 +298,18 @@ function populateSearchDialogList(filter = '') {
       return false;
     }
     return name.toLowerCase().includes(filter.toLowerCase());
+  });
+
+  // Sort on the short name.
+  filteredTypes.sort((a, b) => {
+    const as = a.split(".");
+    const bs = b.split(".");
+    const shortA = as[as.length - 1];
+    const shortB = bs[bs.length - 1];
+    const ret = shortA.localeCompare(shortB);
+
+    if (ret != 0) { return ret; }
+    return a.localeCompare(b);
   });
 
   filteredTypes.forEach(typeName => {
@@ -514,7 +525,7 @@ function restoreFromHash() {
 
   const lastColumn = mainContainer.querySelector('.column:last-child');
   if (lastColumn) {
-      lastColumn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    lastColumn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
   }
 
   return true;
@@ -534,7 +545,7 @@ function init() {
   const currentTheme = document.querySelector('link[rel="stylesheet"]').getAttribute('href');
   themeSelect.value = currentTheme;
 
-  themeSelect.addEventListener('change', function() {
+  themeSelect.addEventListener('change', function () {
     const newTheme = this.value;
     document.querySelector('link[rel="stylesheet"]').setAttribute('href', newTheme);
     localStorage.setItem('selectedTheme', newTheme);
@@ -559,13 +570,11 @@ function init() {
 
   if (restoreFromHash()) { return; }
 
-  if (startTypes.length > 0) {
-    startTypes.forEach(typeName => {
-      const initialColumn = createColumn(typeName);
-      if (initialColumn) {
-        mainContainer.appendChild(initialColumn);
-        }
-    });
+  if (startTypes) {
+    const initialColumn = createColumn(startTypes);
+    if (initialColumn) {
+      mainContainer.appendChild(initialColumn);
+    }
   } else {
     const firstTypeName = Object.keys(typeData)[0];
     if (firstTypeName) {
