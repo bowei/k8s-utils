@@ -54,12 +54,7 @@ func ParsePackages(pkgDirs []string) (map[string]TypeInfo, error) {
 		}
 
 		for pkgPath := range externalPkgs {
-			// As per design, ignore packages in the Go
-			// standard library. A common heuristic is
-			// that standard library packages do not have
-			// a dot in their first path component.
-			firstPart := strings.Split(pkgPath, "/")[0]
-			if !strings.Contains(firstPart, ".") {
+			if skipPackage(pkgPath) {
 				continue
 			}
 
@@ -86,6 +81,31 @@ func ParsePackages(pkgDirs []string) (map[string]TypeInfo, error) {
 	}
 
 	return allTypes, nil
+}
+
+func skipPackage(pkgPath string) bool {
+	// As per design, ignore packages in the Go standard library. A common
+	// heuristic is that standard library packages do not have a dot in their
+	// first path component.
+	firstPart := strings.Split(pkgPath, "/")[0]
+	if !strings.Contains(firstPart, ".") {
+		return true
+	}
+	// Skip some common packages that seem to be included but are not relevant.
+	for _, skip := range []string{
+		"golang.org/x",
+		"k8s.io/klog",
+		"github.com/modern-go",
+		"github.com/json-iterator",
+		"sigs.k8s.io/json",
+		"k8s.io/apimachinery/pkg/runtime",
+		"k8s.io/apimachinery/pkg/third_party",
+	} {
+		if strings.HasPrefix(pkgPath, skip) {
+			return true
+		}
+	}
+	return false
 }
 
 // getPkgPathFromDir uses `go list` to find the import path of a package in a directory.
