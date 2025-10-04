@@ -201,6 +201,16 @@ We need to:
 * Update the state when the user opens and closes the column selections.
 * Restore the column state from the hash.
 
+## Keyboard interaction
+
+In addition to "/" opening the search dialog, we support additional keyboard
+shortcuts. We will need to highlight the current selected field and navigate it
+using the keyboard:
+
+* Left arrow and right arrow to move between columns.
+* Up and down arrow to select which field is open in a given column.
+* Enter will expand the collapsed docstring.
+
 ## Graph data structure
 
 * A map[key]value should have type of value.

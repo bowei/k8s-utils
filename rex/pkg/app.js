@@ -579,19 +579,113 @@ function init() {
 
 window.addEventListener('DOMContentLoaded', init);
 
-document.addEventListener('keydown', (event) => {
+function handleKeyDown(event) {
   if (event.key === '/' && event.target.tagName !== 'INPUT') {
     console.log('‘/’ key pressed');
     event.preventDefault();
     showSearchDialog();
+    return;
   }
   if (event.key === 'Escape') {
     if (searchDialogOverlay.style.display === 'flex') {
       console.log('‘esc’ key pressed');
       hideSearchDialog();
     }
+    return;
   }
-});
+
+  if (searchDialogOverlay.style.display === 'flex') {
+    return;
+  }
+
+  const activeKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+  if (!activeKeys.includes(event.key)) {
+    return;
+  }
+
+  event.preventDefault();
+
+  let selectedItems = mainContainer.querySelectorAll('li.selected');
+
+  if (selectedItems.length === 0) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowLeft'].includes(event.key)) {
+      const firstItem = mainContainer.querySelector('.column:first-child li');
+      if (firstItem) {
+        firstItem.classList.add('selected');
+        firstItem.scrollIntoView({ block: 'nearest' });
+        updateHash();
+      }
+    }
+    return;
+  }
+
+  const activeSelection = selectedItems[selectedItems.length - 1];
+  const activeColumn = activeSelection.closest('.column');
+
+  switch (event.key) {
+    case 'ArrowUp': {
+      const prev = activeSelection.previousElementSibling;
+      if (prev) {
+        activeSelection.classList.remove('selected');
+        prev.classList.add('selected');
+        prev.scrollIntoView({ block: 'nearest' });
+        updateHash();
+      }
+      break;
+    }
+    case 'ArrowDown': {
+      const next = activeSelection.nextElementSibling;
+      if (next) {
+        activeSelection.classList.remove('selected');
+        next.classList.add('selected');
+        next.scrollIntoView({ block: 'nearest' });
+        updateHash();
+      }
+      break;
+    }
+    case 'ArrowRight': {
+      if (typeData[activeSelection.dataset.typeName]) {
+        handleFieldClick(activeSelection);
+        const newColumn = activeColumn.nextElementSibling;
+        if (newColumn) {
+          const firstItem = newColumn.querySelector('li');
+          if (firstItem) {
+            firstItem.classList.add('selected');
+            firstItem.scrollIntoView({ block: 'nearest' });
+            updateHash();
+          }
+        }
+      }
+      break;
+    }
+    case 'ArrowLeft': {
+      if (activeColumn !== mainContainer.firstElementChild) {
+        activeColumn.remove();
+        updateHash();
+        const newSelectedItems = mainContainer.querySelectorAll('li.selected');
+        if (newSelectedItems.length > 0) {
+            const newActiveSelection = newSelectedItems[newSelectedItems.length - 1];
+            newActiveSelection.scrollIntoView({ block: 'nearest' });
+        }
+      }
+      break;
+    }
+    case 'Enter': {
+      const docString = activeSelection.querySelector('.doc-string');
+      if (docString) {
+        const summary = docString.children[0];
+        const details = docString.children[1];
+        if (summary && details && summary.querySelector('span')) {
+          summary.hidden = !summary.hidden;
+          details.hidden = !details.hidden;
+        }
+      }
+      break;
+    }
+  }
+}
+
+document.addEventListener('keydown', handleKeyDown);
 
 helpText.addEventListener('click', () => {
   showSearchDialog();
