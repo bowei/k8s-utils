@@ -23,7 +23,7 @@ global.typeData = {};
 global.startTypes = [];
 
 // Now, require the script to be tested
-const app = require('./app.js');
+const { splitTypeName } = require('./app.js');
 
 describe('splitTypeName', () => {
   it('should correctly split a fully qualified type name', () => {

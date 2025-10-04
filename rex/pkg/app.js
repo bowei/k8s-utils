@@ -735,3 +735,7 @@ searchDialogDialog.addEventListener('click', (event) => {
 searchDialogOverlay.addEventListener('click', () => {
   hideSearchDialog();
 });
+
+module.exports = {
+  splitTypeName,
+};
