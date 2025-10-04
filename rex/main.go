@@ -13,7 +13,7 @@ import (
 func main() {
 	outputFile := flag.String("output", "-", "output file. '-' will write to stdout")
 	jsonOutput := flag.Bool("json", false, "output JSON instead of HTML")
-	startType := flag.String("type", "k8s.io/api/core/v1", "initial type to display")
+	startType := flag.String("type", "k8s.io/api/core/v1.Pod", "initial type to display")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Generate Go API documentation.\n\n")
@@ -59,7 +59,7 @@ func main() {
 
 	log.Printf("Found %d types.\n", len(allTypes))
 
-	if err := pkg.GenerateHTML(allTypes, writer, *startType); err != nil {
+	if err := pkg.GenerateDataJS(allTypes, writer, *startType); err != nil {
 		log.Fatalf("Error generating HTML: %v", err)
 	}
 }
