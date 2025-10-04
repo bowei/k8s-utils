@@ -1,1 +1,7 @@
+node_modules
 rex
+pkg/data.js
+.DS_Store
+.idea
+.project
+.vscode

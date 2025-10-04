@@ -34,4 +34,8 @@ clean-themes:
 	@rm -f $(CSS_FILES) pkg/variables.less
 	@echo "✓ Themes cleaned."
 
-.PHONY: all build clean test themes clean-themes
+.PHONY: all build clean test themes clean-themes test-js
+
+test-js:
+	npm test
+
