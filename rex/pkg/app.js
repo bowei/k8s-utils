@@ -6,6 +6,8 @@ const searchDialogOverlay = document.getElementById('search-dialog-overlay');
 const searchDialogDialog = document.getElementById('search-dialog-dialog');
 const searchDialogInput = document.getElementById('search-dialog-input');
 const searchDialogList = document.getElementById('search-dialog-list');
+const helpDialogOverlay = document.getElementById('help-dialog-overlay');
+const helpDialogDialog = document.getElementById('help-dialog-dialog');
 const helpText = document.getElementById('help-text');
 
 function splitTypeName(fullTypeName) {
@@ -350,6 +352,16 @@ function hideSearchDialog() {
   searchDialogOverlay.style.display = 'none';
 }
 
+function showHelpDialog() {
+  console.log('Showing help dialog');
+  helpDialogOverlay.style.display = 'flex';
+}
+
+function hideHelpDialog() {
+  console.log('Hiding help dialog');
+  helpDialogOverlay.style.display = 'none';
+}
+
 /**
  * Replaces a single text node with a series of text and <a> nodes
  * if any URLs are found in its content.
@@ -595,15 +607,25 @@ function handleKeyDown(event) {
     showSearchDialog();
     return;
   }
+  if (event.key === '?' && event.target.tagName !== 'INPUT') {
+    console.log('‘?’ key pressed');
+    event.preventDefault();
+    showHelpDialog();
+    return;
+  }
   if (event.key === 'Escape') {
     if (searchDialogOverlay.style.display === 'flex') {
       console.log('‘esc’ key pressed');
       hideSearchDialog();
     }
+    if (helpDialogOverlay.style.display === 'flex') {
+      console.log('‘esc’ key pressed');
+      hideHelpDialog();
+    }
     return;
   }
 
-  if (searchDialogOverlay.style.display === 'flex') {
+  if (searchDialogOverlay.style.display === 'flex' || helpDialogOverlay.style.display === 'flex') {
     return;
   }
 
@@ -743,6 +765,14 @@ searchDialogDialog.addEventListener('click', (event) => {
 
 searchDialogOverlay.addEventListener('click', () => {
   hideSearchDialog();
+});
+
+helpDialogDialog.addEventListener('click', (event) => {
+  event.stopPropagation();
+});
+
+helpDialogOverlay.addEventListener('click', () => {
+  hideHelpDialog();
 });
 
 module.exports = {

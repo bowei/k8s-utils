@@ -226,6 +226,52 @@ li.selected .chevron::after {
   background-color: @search-item-hover;
 }
 
+#help-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: @overlay-bg;
+  z-index: 100;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+#help-dialog-dialog {
+  background-color: @dialog-bg;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 600px;
+  box-shadow: 0 5px 15px @dialog-shadow;
+}
+
+#help-dialog-dialog h2 {
+  margin-top: 0;
+}
+
+#help-dialog-dialog ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+#help-dialog-dialog li {
+  display: block;
+  align-items: center;
+  padding: 8px 0;
+  border: 0;
+}
+
+#help-dialog-dialog kbd {
+  margin-right: 10px;
+  width: 50px;
+  text-align: center;
+}
+
+
 .search-dialog-type-name {
   font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 10pt;
