@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define SIZE_GB (1UL * 1024 * 1024 * 1024)
+#define DEFAULT_SIZE_MB 1024
 #define PAGE_SIZE 4096UL
 
 static double elapsed_ms(struct timespec *start, struct timespec *end) {
@@ -61,21 +61,36 @@ static void read_pages_random(volatile char *buf, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
+    size_t size_mb = DEFAULT_SIZE_MB;
     int random_mode = 0;
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--random") == 0)
+        if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--random") == 0) {
             random_mode = 1;
-        else {
-            fprintf(stderr, "Usage: %s [-r|--random]\n", argv[0]);
+        } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--size") == 0) {
+            if (i + 1 < argc) {
+                long val = strtol(argv[++i], NULL, 10);
+                if (val <= 0) {
+                    fprintf(stderr, "Invalid size: %s (must be a positive integer)\n", argv[i]);
+                    return 1;
+                }
+                size_mb = (size_t)val;
+            } else {
+                fprintf(stderr, "Option %s requires an argument\n", argv[i]);
+                return 1;
+            }
+        } else {
+            fprintf(stderr, "Usage: %s [-r|--random] [-s|--size <size_mb>]\n", argv[0]);
             return 1;
         }
     }
 
+    size_t alloc_size = size_mb * 1024UL * 1024UL;
+
     struct timespec t0, t1;
 
     printf("Mode        : %s\n", random_mode ? "random (worst-case)" : "sequential");
-    printf("Allocating %lu MB...\n", SIZE_GB / (1024 * 1024));
-    char *buf = mmap(NULL, SIZE_GB, PROT_READ | PROT_WRITE,
+    printf("Allocating %lu MB...\n", size_mb);
+    char *buf = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE,
                      MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     if (buf == MAP_FAILED) {
         perror("mmap");
@@ -83,21 +98,21 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Touching all pages...\n");
-    touch_pages(buf, SIZE_GB);
+    touch_pages(buf, alloc_size);
     printf("Pages touched.\n\n");
 
     /* Swap out */
     printf("Swapping out via MADV_PAGEOUT...\n");
     clock_gettime(CLOCK_MONOTONIC, &t0);
-    if (madvise(buf, SIZE_GB, MADV_PAGEOUT) != 0) {
+    if (madvise(buf, alloc_size, MADV_PAGEOUT) != 0) {
         perror("madvise MADV_PAGEOUT");
-        munmap(buf, SIZE_GB);
+        munmap(buf, alloc_size);
         return 1;
     }
     clock_gettime(CLOCK_MONOTONIC, &t1);
 
     double swap_out_ms = elapsed_ms(&t0, &t1);
-    double swap_out_bw = (SIZE_GB / (1024.0 * 1024.0)) / (swap_out_ms / 1000.0);
+    double swap_out_bw = (double)size_mb / (swap_out_ms / 1000.0);
     printf("SWAP_OUT_MS=%.2f\n", swap_out_ms);
     printf("SWAP_OUT_BW_MB_S=%.1f\n\n", swap_out_bw);
 
@@ -106,16 +121,16 @@ int main(int argc, char *argv[]) {
            random_mode ? "randomly faulting in" : "reading");
     clock_gettime(CLOCK_MONOTONIC, &t0);
     if (random_mode)
-        read_pages_random(buf, SIZE_GB);
+        read_pages_random(buf, alloc_size);
     else
-        read_pages(buf, SIZE_GB);
+        read_pages(buf, alloc_size);
     clock_gettime(CLOCK_MONOTONIC, &t1);
 
     double page_in_ms = elapsed_ms(&t0, &t1);
-    double page_in_bw = (SIZE_GB / (1024.0 * 1024.0)) / (page_in_ms / 1000.0);
+    double page_in_bw = (double)size_mb / (page_in_ms / 1000.0);
     printf("PAGE_IN_MS=%.2f\n", page_in_ms);
     printf("PAGE_IN_BW_MB_S=%.1f\n", page_in_bw);
 
-    munmap(buf, SIZE_GB);
+    munmap(buf, alloc_size);
     return 0;
 }

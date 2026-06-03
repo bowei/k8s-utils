@@ -8,10 +8,44 @@ TRACE_FILE="$(mktemp /tmp/swap_trace.XXXXXX.csv)"
 TRACER_PID=""
 RANDOM_FLAG=""
 
-for arg in "$@"; do
-    case "$arg" in
-        -r|--random) RANDOM_FLAG="--random" ;;
-        *) echo "Usage: $0 [-r|--random]" >&2; exit 1 ;;
+SIZE_FLAG=""
+
+# Colors
+if [[ -t 1 ]]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    BOLD='\033[1m'
+    NC='\033[0m'
+else
+    RED=''
+    GREEN=''
+    YELLOW=''
+    BLUE=''
+    BOLD=''
+    NC=''
+fi
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -r|--random)
+            RANDOM_FLAG="--random"
+            shift
+            ;;
+        -s|--size)
+            if [[ -n "${2:-}" ]]; then
+                SIZE_FLAG="--size $2"
+                shift 2
+            else
+                echo "Error: --size requires an argument" >&2
+                exit 1
+            fi
+            ;;
+        *)
+            echo "Usage: $0 [-r|--random] [-s|--size <size_mb>]" >&2
+            exit 1
+            ;;
     esac
 done
 
@@ -75,24 +109,24 @@ snapshot_vmstat() {
 # ---------------------------------------------------------------------------
 
 if [[ ! -x "$SWAP_TEST" ]]; then
-    echo "ERROR: $SWAP_TEST not found — run 'make' first." >&2
+    printf "${RED}ERROR: %s not found — run 'make' first.${NC}\n" "$SWAP_TEST" >&2
     exit 1
 fi
 
 SWAP_DEV=$(detect_swap_device)
 if [[ -z "$SWAP_DEV" ]]; then
-    echo "ERROR: No active swap device found." >&2
+    printf "${RED}ERROR: No active swap device found.${NC}\n" >&2
     exit 1
 fi
 
 SWAP_TOTAL=$(awk '/^SwapTotal/{print $2}' /proc/meminfo)
 if [[ "$SWAP_TOTAL" -lt $((1024 * 1024)) ]]; then
-    echo "WARNING: Less than 1 GB of swap available (${SWAP_TOTAL} kB)." >&2
+    printf "${YELLOW}WARNING: Less than 1 GB of swap available (%s kB).${NC}\n" "$SWAP_TOTAL" >&2
 fi
 
-echo "Kernel      : $(uname -r)"
-echo "Swap device : $SWAP_DEV"
-echo "Swap total  : $((SWAP_TOTAL / 1024)) MB"
+printf "${BOLD}%-12s${NC}: %s\n" "Kernel" "$(uname -r)"
+printf "${BOLD}%-12s${NC}: %s\n" "Swap device" "$SWAP_DEV"
+printf "${BOLD}%-12s${NC}: %s MB\n" "Swap total" "$((SWAP_TOTAL / 1024))"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -106,7 +140,7 @@ read -r R_BEF RM_BEF RS_BEF W_BEF WM_BEF WS_BEF < <(snapshot_diskstats "$SWAP_DE
 read -r PIN_BEF POUT_BEF < <(snapshot_vmstat)
 T_START_MS=$(date +%s%3N)
 
-TEST_OUTPUT=$("$SWAP_TEST" $RANDOM_FLAG)
+TEST_OUTPUT=$("$SWAP_TEST" $RANDOM_FLAG $SIZE_FLAG)
 echo "$TEST_OUTPUT"
 
 T_END_MS=$(date +%s%3N)
@@ -132,6 +166,7 @@ awk -v dev="$SWAP_DEV" \
     -v pin_bef="$PIN_BEF" -v pout_bef="$POUT_BEF" \
     -v pin_aft="$PIN_AFT" -v pout_aft="$POUT_AFT" \
     -v trace="$TRACE_FILE" \
+    -v red="$RED" -v green="$GREEN" -v yellow="$YELLOW" -v blue="$BLUE" -v bold="$BOLD" -v nc="$NC" \
 'BEGIN {
     # Deltas from before/after snapshots
     dr  = r_aft  - r_bef;   drm = rm_aft - rm_bef;  drs = rs_aft - rs_bef
@@ -179,8 +214,8 @@ awk -v dev="$SWAP_DEV" \
     }
 
     print ""
-    print "=== Block I/O on " dev " ==="
-    printf "  %-30s %12s %12s\n", "", "Reads", "Writes"
+    print bold "=== Block I/O on " dev " ===" nc
+    printf "  %-30s %s %s\n", "", bold "       Reads" nc, bold "      Writes" nc
     printf "  %-30s %12d %12d\n",   "IOs completed (physical):", dr, dw
     printf "  %-30s %12d %12d\n",   "IOs merged (logical):",     drm, dwm
     printf "  %-30s %11.1f%% %11.1f%%\n", "Merge ratio:",        r_merge_pct, w_merge_pct
@@ -189,17 +224,17 @@ awk -v dev="$SWAP_DEV" \
     printf "  %-30s %11.1f  %11.1f  MB/s\n", "Avg bandwidth (wall time):", avg_r_bw, avg_w_bw
     printf "  %-30s %11.1f  %11.1f  MB/s\n", "Peak bandwidth (100ms win):", peak_r_bw, peak_w_bw
     print  ""
-    print  "=== I/O Aggregation (how reads are batched to device) ==="
+    print  bold "=== I/O Aggregation (how reads are batched to device) ===" nc
     printf "  %-32s %9.1f  KB\n", "Avg physical read size (post-merge):", avg_r_io / 1024
     printf "  %-32s %9.1f  KB\n", "Avg logical read size (pre-merge):",   avg_r_logical / 1024
     if (avg_r_logical > 0)
         printf "  %-32s %9.1fx\n", "Merge amplification factor:", avg_r_io / avg_r_logical
     print  ""
-    print  "=== VM Swap Pages ==="
+    print  bold "=== VM Swap Pages ===" nc
     printf "  Pages swapped out : %d  (%.1f MB)\n", pout, pout * 4096 / 1048576
     printf "  Pages swapped in  : %d  (%.1f MB)\n", pin,  pin  * 4096 / 1048576
     print  ""
-    printf "  Trace saved to: %s\n", trace
+    printf "  Trace saved to: " green "%s" nc "\n", trace
 }'
 
 # Prevent cleanup from deleting the trace file
