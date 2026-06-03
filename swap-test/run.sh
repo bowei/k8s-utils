@@ -31,13 +31,28 @@ trap cleanup EXIT
 # Handles both swap partitions and swap files.
 detect_swap_device() {
     while read -r filename type _; do
+        local dev_node=""
         if [[ "$type" == "partition" ]]; then
-            basename "$filename"
-            return
+            dev_node="$filename"
         elif [[ "$type" == "file" ]]; then
-            local dev_path
-            dev_path=$(df "$filename" 2>/dev/null | awk 'NR==2{print $1}')
-            basename "$dev_path"
+            dev_node=$(df "$filename" 2>/dev/null | awk 'NR==2{print $1}')
+        fi
+
+        if [[ -b "$dev_node" ]]; then
+            local major_hex minor_hex major minor sys_path
+            major_hex=$(stat -c "%t" "$dev_node")
+            minor_hex=$(stat -c "%T" "$dev_node")
+            major=$((16#$major_hex))
+            minor=$((16#$minor_hex))
+            if sys_path=$(readlink -f "/sys/dev/block/$major:$minor" 2>/dev/null); then
+                basename "$sys_path"
+                return
+            fi
+        fi
+
+        # Fallback
+        if [[ -n "$dev_node" ]]; then
+            basename "$(readlink -f "$dev_node")"
             return
         fi
     done < <(awk 'NR>1' /proc/swaps)
